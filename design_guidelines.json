@@ -1,0 +1,255 @@
+{
+  "app_name": "NASUKI",
+  "personality": "1 iOS-Native Clean layout combined with 7 Dark-First Utility aesthetics",
+  "personality_one_liner": "A pristine, minimal, monochrome AI assistant that feels like a native OS level feature—dark-first, precise, and completely free of visual noise.",
+  "color": {
+    "light": {
+      "surface": "#FFFFFF",
+      "onSurface": "#09090B",
+      "surfaceSecondary": "#F4F4F5",
+      "onSurfaceSecondary": "#52525B",
+      "surfaceTertiary": "#E4E4E7",
+      "onSurfaceTertiary": "#27272A",
+      "surfaceInverse": "#09090B",
+      "onSurfaceInverse": "#FFFFFF",
+      "brand": "#09090B",
+      "brandPrimary": "#09090B",
+      "onBrandPrimary": "#FFFFFF",
+      "brandSecondary": "#E4E4E7",
+      "onBrandSecondary": "#09090B",
+      "brandTertiary": "#F4F4F5",
+      "onBrandTertiary": "#09090B",
+      "success": "#14532D",
+      "onSuccess": "#FFFFFF",
+      "warning": "#78350F",
+      "onWarning": "#FFFFFF",
+      "error": "#7F1D1D",
+      "onError": "#FFFFFF",
+      "info": "#52525B",
+      "onInfo": "#FFFFFF",
+      "border": "#E4E4E7",
+      "borderStrong": "#A1A1AA",
+      "divider": "#F4F4F5"
+    },
+    "dark": {
+      "surface": "#09090B",
+      "onSurface": "#FAFAFA",
+      "surfaceSecondary": "#18181B",
+      "onSurfaceSecondary": "#A1A1AA",
+      "surfaceTertiary": "#27272A",
+      "onSurfaceTertiary": "#D4D4D8",
+      "surfaceInverse": "#FAFAFA",
+      "onSurfaceInverse": "#09090B",
+      "brand": "#FAFAFA",
+      "brandPrimary": "#FAFAFA",
+      "onBrandPrimary": "#09090B",
+      "brandSecondary": "#27272A",
+      "onBrandSecondary": "#FAFAFA",
+      "brandTertiary": "#18181B",
+      "onBrandTertiary": "#FAFAFA",
+      "success": "#22C55E",
+      "onSuccess": "#052E16",
+      "warning": "#F59E0B",
+      "onWarning": "#451A03",
+      "error": "#EF4444",
+      "onError": "#450A0A",
+      "info": "#A1A1AA",
+      "onInfo": "#09090B",
+      "border": "#27272A",
+      "borderStrong": "#52525B",
+      "divider": "#18181B"
+    }
+  },
+  "typography": {
+    "displayFontFamily": "Geist",
+    "textFontFamily": "Geist",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Generous Apple-like margins, 16px screen padding, 12px gaps between cards.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 6,
+    "md": 12,
+    "lg": 20,
+    "pill": 999
+  },
+  "shadow_tier": "1",
+  "navigation": "bottom_tabs",
+  "icon_set": "Phosphor",
+  "glassmorphism": {
+    "enabled": "true",
+    "do's": [
+      "Use blur on the bottom tab bar.",
+      "Use blur on the floating chat input bar.",
+      "Use blur on sticky headers when scrolling."
+    ],
+    "dont's": [
+      "Do not use blur on message bubbles.",
+      "Do not use blur on model cards."
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Splash",
+      "purpose": "Brand entry point.",
+      "states": {
+        "loading": "Centered minimalist abstract sphere logo pulsing.",
+        "empty": "N/A",
+        "error": "N/A"
+      },
+      "layout": "Centered logo (image) with 'NASUKI' wordmark in display font below it. Clean surface background."
+    },
+    {
+      "name": "Onboarding",
+      "purpose": "Introduce the local AI concept.",
+      "states": {
+        "loading": "N/A",
+        "empty": "N/A",
+        "error": "N/A"
+      },
+      "layout": "Carousel with abstract monochrome illustrations. Large typography for headlines. Sticky 'Get Started' brandPrimary button at bottom inside safe area."
+    },
+    {
+      "name": "Login",
+      "purpose": "User authentication.",
+      "states": {
+        "loading": "Spinner in CTA.",
+        "empty": "N/A",
+        "error": "Toast with error message."
+      },
+      "layout": "Clean top-aligned typography. Input fields in surfaceSecondary. 'Continue with Google' and 'Demo Mode' buttons at the bottom. No heavy illustrations."
+    },
+    {
+      "name": "Home Dashboard",
+      "purpose": "Quick access to AI capabilities.",
+      "states": {
+        "loading": "Skeleton loaders for cards.",
+        "empty": "No recent chats - 'Start a conversation' placeholder.",
+        "error": "N/A"
+      },
+      "layout": "Header with user avatar. Horizontal scroll of 'Quick Prompts' (pills). Vertical list of recent chat cards (surfaceSecondary). Floating FAB for 'New Chat' using glassmorphism."
+    },
+    {
+      "name": "AI Chat",
+      "purpose": "The main conversational interface.",
+      "states": {
+        "loading": "Typing indicator (3 pulsing dots) inside an AI bubble.",
+        "empty": "AI Avatar + 'How can I help you today?' centered vertically.",
+        "error": "Red warning icon next to failed message + retry."
+      },
+      "layout": "Scrollable chat view. User bubbles are brandPrimary (White bg on dark mode, Black text). AI bubbles are surfaceSecondary. Bottom floating input bar with expo-blur background, text input, and an icon button for submit."
+    },
+    {
+      "name": "Chat History",
+      "purpose": "Manage previous sessions.",
+      "states": {
+        "loading": "Skeleton list.",
+        "empty": "Icon + 'No chat history found'.",
+        "error": "N/A"
+      },
+      "layout": "Sticky search bar at top. Flat list of past sessions with title, date, and swipe-to-delete/pin actions."
+    },
+    {
+      "name": "Model Store",
+      "purpose": "Browse and download local LLMs.",
+      "states": {
+        "loading": "Skeleton cards.",
+        "empty": "N/A",
+        "error": "N/A"
+      },
+      "layout": "2-column grid or single column list of ModelCards. Cards have model name, size (e.g. 4GB), RAM req, and a prominent Download button. Active downloads show a progress bar replacing the button."
+    },
+    {
+      "name": "Model Details",
+      "purpose": "Deep dive into a specific model's specs.",
+      "states": {
+        "loading": "Skeleton.",
+        "empty": "N/A",
+        "error": "N/A"
+      },
+      "layout": "Presented as a bottom sheet or pushed screen. Large model name, detailed metadata rows (License, Context Window, Params). Fixed 'Download' CTA at bottom."
+    },
+    {
+      "name": "RAG Documents",
+      "purpose": "Upload docs for local context.",
+      "states": {
+        "loading": "Processing state with spinner on the document card.",
+        "empty": "Empty state illustration + 'Upload your first document'.",
+        "error": "Failed to parse document."
+      },
+      "layout": "Top section: Dashed border upload zone (borderStrong). Bottom section: List of uploaded documents with processing status badges."
+    },
+    {
+      "name": "Credits",
+      "purpose": "Manage app economy.",
+      "states": {
+        "loading": "Spinner.",
+        "empty": "No transactions yet.",
+        "error": "N/A"
+      },
+      "layout": "Large hero card at top showing current balance (surfaceSecondary bg). Grid of 'Buy' and 'Watch Ad' action buttons. List of recent transactions below."
+    },
+    {
+      "name": "Profile & Settings",
+      "purpose": "User preferences and app settings.",
+      "states": {
+        "loading": "N/A",
+        "empty": "N/A",
+        "error": "N/A"
+      },
+      "layout": "Standard grouped list layout (iOS style). Toggles for dark mode, haptics. Links to Privacy, Feedback, Bug Report."
+    }
+  ],
+  "images": {
+    "splash_logo": {
+      "url": "https://images.unsplash.com/photo-1709625862266-014ef072fd93?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGZsdWlkJTIwc3BoZXJlJTIwZGFyayUyMG1vbm9jaHJvbWV8ZW58MHx8fHwxNzg2ODExMDk3fDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Abstract monochrome fluid sphere"
+    },
+    "ai_avatar": {
+      "url": "https://images.unsplash.com/photo-1647892842753-01ee3cafd42e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NDh8MHwxfHNlYXJjaHwxfHxtaW5pbWFsaXN0JTIwZ2VvbWV0cmljJTIwbG9nbyUyMGJsYWNrJTIwYW5kJTIwd2hpdGV8ZW58MHx8fHwxNzg2ODExMDk3fDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Minimalist geometric AI avatar"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Strictly follow the monochrome palette. Do not add any blues, purples, or random accent colors. The primary 'accent' is purely contrast (White in Dark mode, Black in Light mode).",
+    "Implement the 'Dark-first' feel by using surfaceSecondary (#18181B) heavily for cards and bubbles against the #09090B surface background in dark mode.",
+    "For the AI Chat screen, use a floating input bar wrapped in a glassmorphism container (expo-blur) at the bottom, so the chat bubbles scroll underneath it.",
+    "User chat bubbles should be high contrast (brandPrimary), AI chat bubbles should be low contrast (surfaceSecondary).",
+    "ModelCards must display dynamic download states (button -> progress bar -> complete). Use standard React Native progress bars.",
+    "Use Phosphor icons consistently across all tabs and components. Keep weights uniform.",
+    "For the bottom tab bar, implement a glass effect. Ensure content scrolls properly behind it."
+  ],
+  "haptics": {
+    "button_press": "light",
+    "tab_switch": "light",
+    "message_sent": "medium",
+    "model_download_start": "heavy",
+    "toggle_switch": "light"
+  }
+}
