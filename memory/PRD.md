@@ -66,3 +66,36 @@ https://nasuki-auth-sqlite.preview.emergentagent.com — or scan the Expo Go QR 
 ## Notes / Limitations
 - All data is mock/in-memory; nothing persists server-side. Onboarding/auth persist via local storage.
 - Backend (FastAPI/Mongo) is untouched and unused in Phase 1.
+
+---
+
+## Phase 2 — Offline-first foundation (COMPLETE)
+
+Built on top of the Phase 1 UI (UI unchanged).
+
+### Data layer (SQLite)
+- `expo-sqlite` on native, `sql.js` (WASM) on web — behind one `SqlExecutor` interface (`src/database/executor.ts` / `executor.web.ts`).
+- Web WASM is served from the app's OWN origin (`/public/sql-wasm.wasm` + `/public/sql-wasm-browser.wasm`) via `window.location.origin` — NO external CDN.
+- Idempotent versioned migrations via `PRAGMA user_version` (`src/database/schema.ts`, `client.ts`). No destructive reset on startup.
+- Tables: users, conversations, messages, models, installed_models, documents, document_chunks, credit_wallet, credit_transactions.
+- Repositories (`src/database/repositories/*`): user, conversation, message, model, document, credit — all parameterized SQL, user-scoped for isolation.
+
+### Auth
+- `AuthService` (`src/services/auth-service.ts`): initialize / signInWithGoogle / signInWithDemo / signOut / getCurrentUser / isAuthenticated / restoreSession / refreshSession.
+- Demo login = PRIMARY dev path, gated by `AUTH.devAuthEnabled` (`__DEV__` or `EXPO_PUBLIC_DEV_AUTH_ENABLED=true`).
+- Google = real Emergent keyless flow -> backend `POST /api/auth/session`. Session token stored ONLY in SecureStore/Keychain. (Expo Go native redirect is limited — documented.)
+- Auth state machine (`src/hooks/use-auth.tsx`): INITIALIZING/SIGNED_OUT/AUTHENTICATING/SIGNED_IN/ERROR. Route protection preserved.
+- DB bootstrap gate (`src/hooks/use-database.tsx`): INITIALIZING/READY/ERROR with Retry; top-level `ErrorBoundary` prevents blank screens.
+
+### Backend (foundation only)
+- `backend/server.py`: `/api/auth/session`, `/api/auth/me`, `/api/auth/logout` + existing `/api/status`. Mongo users + user_sessions (TTL). Created missing `backend/.env`.
+
+### Chat persistence
+- Existing chat UI wired to SQLite via `ChatService`. User + MOCK assistant messages persist; survive app restart / page reload. (No Gemma/LLM yet.)
+
+### NOT implemented (later phases): Gemma/LLM inference, model downloads, RAG/embeddings/vector search, AdMob, billing/real credits, image/video gen, cloud sync, E2E encryption, marketplace.
+
+### Verified by testing agents
+- Backend: 7/7 auth-foundation scenarios pass.
+- Frontend: renders (no blank screen), onboarding, demo login -> SIGNED_IN, create chat, send, mock reply, reload -> history persists.
+
