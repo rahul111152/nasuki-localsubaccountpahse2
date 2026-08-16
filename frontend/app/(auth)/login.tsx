@@ -6,7 +6,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Logo, ScreenContainer, Touchable } from "@/src/components/ui";
-import { APP } from "@/src/constants/config";
+import { APP, AUTH } from "@/src/constants/config";
 import { useAuth } from "@/src/hooks/use-auth";
 import { useToast } from "@/src/hooks/use-toast";
 import { useTheme } from "@/src/theme";
@@ -75,13 +75,17 @@ export default function Login() {
           <Touchable
             testID="login-demo-button"
             onPress={() => run("demo")}
-            disabled={busy !== null}
+            disabled={busy !== null || !AUTH.devAuthEnabled}
             haptic={false}
-            style={{ marginTop: spacing.lg, alignSelf: "center" }}
+            style={{
+              marginTop: spacing.lg,
+              alignSelf: "center",
+              opacity: AUTH.devAuthEnabled ? 1 : 0,
+            }}
             accessibilityLabel="Continue as demo"
           >
             <Text style={[typography.bodyStrong, { color: colors.textSecondary }]}>
-              {busy === "demo" ? "Loading…" : "Continue as demo"}
+              {busy === "demo" ? "Loading…" : "Continue as demo (dev)"}
             </Text>
           </Touchable>
         </View>

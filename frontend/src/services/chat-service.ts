@@ -1,13 +1,14 @@
-// ChatService — mock chat. Phase 2 wires this to the local LLM (Gemma) + SQLite.
+// ChatService — orchestrates the chat UI against the SQLite repositories,
+// scoped to the active user. The assistant reply is still a MOCK in Phase 2
+// (no Gemma / LLM inference yet), but both the user message and the mock
+// assistant message are PERSISTED so history survives an app restart.
 
-import { mockConversations, mockMessages } from "@/src/constants/mock-data";
-import { Conversation, Message } from "@/src/types";
-import { delay, nowIso, uid } from "@/src/utils/misc";
-
-let conversations: Conversation[] = [...mockConversations];
-const messages: Record<string, Message[]> = JSON.parse(
-  JSON.stringify(mockMessages),
-);
+import {
+  ConversationRepository,
+  MessageRepository,
+} from "@/src/database";
+import { Conversation, Message, MessageStatus } from "@/src/types";
+import { getActiveUserId, requireActiveUserId } from "./active-user";
 
 const CANNED = [
   "Great question! Here's a clear breakdown you can use right away.",
@@ -18,99 +19,86 @@ const CANNED = [
 
 export const ChatService = {
   async listConversations(): Promise<Conversation[]> {
-    await delay(400);
-    return [...conversations].sort(
-      (a, b) =>
-        Number(b.pinned) - Number(a.pinned) ||
-        +new Date(b.updatedAt) - +new Date(a.updatedAt),
-    );
+    const userId = getActiveUserId();
+    if (!userId) return [];
+    return ConversationRepository.getConversations(userId, { limit: 100 });
+  },
+
+  async getConversation(id: string): Promise<Conversation | null> {
+    return ConversationRepository.getConversation(id);
   },
 
   async getMessages(conversationId: string): Promise<Message[]> {
-    await delay(300);
-    return messages[conversationId] ?? [];
+    return MessageRepository.getMessages(conversationId, { limit: 500 });
   },
 
   async createConversation(modelId: string): Promise<Conversation> {
-    await delay(200);
-    const convo: Conversation = {
-      id: uid("cnv"),
-      title: "New chat",
-      modelId,
-      lastMessage: "",
-      pinned: false,
-      messageCount: 0,
-      updatedAt: nowIso(),
-      createdAt: nowIso(),
-    };
-    conversations = [convo, ...conversations];
-    messages[convo.id] = [];
-    return convo;
+    const userId = requireActiveUserId();
+    return ConversationRepository.createConversation({ userId, modelId });
   },
 
-  // Mock streaming: returns the user + assistant messages the UI should render.
-  async sendMessage(
-    conversationId: string,
-    content: string,
-  ): Promise<{ user: Message; assistant: Message }> {
-    const user: Message = {
-      id: uid("m"),
+  async addUserMessage(conversationId: string, content: string): Promise<Message> {
+    const msg = await MessageRepository.addMessage({
       conversationId,
       role: "user",
       content,
-      state: "completed",
-      createdAt: nowIso(),
-    };
-    const reply = CANNED[Math.floor(Math.random() * CANNED.length)];
-    const assistant: Message = {
-      id: uid("m"),
-      conversationId,
-      role: "assistant",
-      content: `${reply}\n\nYou asked: "${content.slice(0, 80)}"`,
-      state: "generating",
-      createdAt: nowIso(),
-    };
-    const list = messages[conversationId] ?? [];
-    messages[conversationId] = [...list, user, assistant];
-    return { user, assistant };
+      status: "completed",
+    });
+    await ConversationRepository.touch(conversationId, content);
+    return msg;
   },
 
-  async stopGeneration(_conversationId: string): Promise<void> {
-    await delay(100);
-  },
-
-  async regenerateMessage(
+  async addAssistantMessage(
     conversationId: string,
+    content: string,
+    status: MessageStatus = "generating",
+    modelId?: string | null,
   ): Promise<Message> {
-    await delay(400);
-    const reply = CANNED[Math.floor(Math.random() * CANNED.length)];
-    return {
-      id: uid("m"),
+    return MessageRepository.addMessage({
       conversationId,
       role: "assistant",
-      content: reply,
-      state: "generating",
-      createdAt: nowIso(),
-    };
+      content,
+      status,
+      modelId: modelId ?? null,
+    });
+  },
+
+  async completeAssistantMessage(
+    conversationId: string,
+    messageId: string,
+    content: string,
+    status: MessageStatus = "completed",
+  ): Promise<void> {
+    await MessageRepository.updateMessage(messageId, { content, status });
+    if (status === "completed") {
+      await ConversationRepository.touch(conversationId, content);
+    }
+  },
+
+  async updateMessage(
+    messageId: string,
+    patch: Partial<{ content: string; status: MessageStatus }>,
+  ): Promise<void> {
+    await MessageRepository.updateMessage(messageId, patch);
   },
 
   async renameConversation(id: string, title: string): Promise<void> {
-    await delay(150);
-    conversations = conversations.map((c) =>
-      c.id === id ? { ...c, title } : c,
-    );
+    await ConversationRepository.renameConversation(id, title);
   },
 
   async togglePin(id: string): Promise<void> {
-    await delay(120);
-    conversations = conversations.map((c) =>
-      c.id === id ? { ...c, pinned: !c.pinned } : c,
-    );
+    const convo = await ConversationRepository.getConversation(id);
+    if (!convo) return;
+    await ConversationRepository.pinConversation(id, !convo.pinned);
   },
 
   async deleteConversation(id: string): Promise<void> {
-    await delay(150);
-    conversations = conversations.filter((c) => c.id !== id);
-    delete messages[id];
+    await ConversationRepository.deleteConversation(id);
+  },
+
+  /** MOCK assistant reply generator (placeholder for Phase 3 on-device LLM). */
+  generateMockReply(userContent: string): string {
+    const reply = CANNED[Math.floor(Math.random() * CANNED.length)];
+    return `${reply}\n\nYou asked: "${userContent.slice(0, 120)}"`;
   },
 };

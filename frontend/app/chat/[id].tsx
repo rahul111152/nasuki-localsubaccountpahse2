@@ -14,10 +14,8 @@ import {
   Touchable,
 } from "@/src/components/ui";
 import { ChatService } from "@/src/services";
-import { mockConversations } from "@/src/constants/mock-data";
 import { Message } from "@/src/types";
 import { useTheme } from "@/src/theme";
-import { uid } from "@/src/utils/misc";
 
 const SUGGESTIONS = [
   "Summarize this in 3 bullets",
@@ -25,28 +23,29 @@ const SUGGESTIONS = [
   "Explain like I'm five",
 ];
 
-const REPLY =
-  "Here's a clear, helpful answer generated locally on your device. In Phase 2 this will come from the on-device model you installed.";
-
 export default function ChatConversation() {
   const { colors, spacing, typography, radius } = useTheme();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [messages, setMessages] = useState<Message[]>([]);
+  const [title, setTitle] = useState("New chat");
   const [text, setText] = useState("");
   const [modelLoading, setModelLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const listRef = useRef<FlatList<Message>>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const generatingId = useRef<string | null>(null);
 
-  const title = useMemo(
-    () => mockConversations.find((c) => c.id === id)?.title ?? "New chat",
-    [id],
+  const subtitle = useMemo(
+    () => (modelLoading ? "Model loading…" : "Gamma · on-device"),
+    [modelLoading],
   );
 
   useEffect(() => {
     (async () => {
+      const convo = await ChatService.getConversation(id);
+      if (convo) setTitle(convo.title);
       const existing = await ChatService.getMessages(id);
       setMessages(existing);
       setTimeout(() => setModelLoading(false), 700); // simulate model warmup
@@ -61,39 +60,31 @@ export default function ChatConversation() {
   }, []);
 
   const send = useCallback(
-    (value: string) => {
+    async (value: string) => {
       const content = value.trim();
       if (!content || generating) return;
-      const userMsg: Message = {
-        id: uid("m"),
-        conversationId: id,
-        role: "user",
-        content,
-        state: "completed",
-        createdAt: new Date().toISOString(),
-      };
-      const assistantId = uid("m");
-      const assistantMsg: Message = {
-        id: assistantId,
-        conversationId: id,
-        role: "assistant",
-        content: "",
-        state: "generating",
-        createdAt: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, userMsg, assistantMsg]);
       setText("");
       setGenerating(true);
+
+      // Persist the user message + a generating assistant placeholder.
+      const userMsg = await ChatService.addUserMessage(id, content);
+      const assistantMsg = await ChatService.addAssistantMessage(id, "", "generating");
+      generatingId.current = assistantMsg.id;
+      setMessages((prev) => [...prev, userMsg, assistantMsg]);
       scrollToEnd();
 
-      timer.current = setTimeout(() => {
+      // MOCK reply (Phase 2 has no on-device LLM yet) — persisted on completion.
+      timer.current = setTimeout(async () => {
+        const reply = ChatService.generateMockReply(content);
+        await ChatService.completeAssistantMessage(id, assistantMsg.id, reply, "completed");
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === assistantId
-              ? { ...m, content: `${REPLY}\n\nYou asked: "${content}"`, state: "completed" }
+            m.id === assistantMsg.id
+              ? { ...m, content: reply, state: "completed", status: "completed" }
               : m,
           ),
         );
+        generatingId.current = null;
         setGenerating(false);
         scrollToEnd();
       }, 1400);
@@ -101,8 +92,9 @@ export default function ChatConversation() {
     [generating, id, scrollToEnd],
   );
 
-  const stop = useCallback(() => {
+  const stop = useCallback(async () => {
     if (timer.current) clearTimeout(timer.current);
+    const genId = generatingId.current;
     setMessages((prev) =>
       prev.map((m) =>
         m.state === "generating"
@@ -111,13 +103,23 @@ export default function ChatConversation() {
       ),
     );
     setGenerating(false);
-  }, []);
+    if (genId) {
+      const current = messages.find((m) => m.id === genId);
+      await ChatService.completeAssistantMessage(
+        id,
+        genId,
+        current?.content || "Stopped.",
+        "completed",
+      );
+      generatingId.current = null;
+    }
+  }, [id, messages]);
 
   return (
     <ScreenContainer testID="chat-conversation">
       <Header
         title={title}
-        subtitle={modelLoading ? "Model loading…" : "Gamma · on-device"}
+        subtitle={subtitle}
         showBack
         right={
           <IconButton

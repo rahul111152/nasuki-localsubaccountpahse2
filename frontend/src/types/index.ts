@@ -14,6 +14,7 @@ export type ChatMessageState =
 
 // ---- Auth / User ------------------------------------------------------------
 export type AuthMethod = "google" | "demo";
+export type AuthProvider = AuthMethod;
 
 export interface User {
   id: string;
@@ -22,18 +23,30 @@ export interface User {
   avatarUrl?: string;
   method: AuthMethod;
   createdAt: string; // ISO
+  // ---- Phase 2 additions (optional to preserve Phase 1 shapes) ----
+  remoteId?: string | null; // stable backend user_id for Google accounts
+  profileImage?: string | null;
+  isDemoUser?: boolean;
+  updatedAt?: string; // ISO
 }
 
 // ---- Chat -------------------------------------------------------------------
 export type MessageRole = "user" | "assistant" | "system";
+export type MessageStatus = "pending" | "generating" | "completed" | "failed";
+export type ConversationMode = "offline" | "online" | "rag" | "private";
 
 export interface Message {
   id: string;
   conversationId: string;
   role: MessageRole;
   content: string;
-  state: ChatMessageState;
+  state: ChatMessageState; // UI-facing render state (derived from `status`)
   createdAt: string; // ISO
+  // ---- Phase 2 additions ----
+  status?: MessageStatus; // persisted DB status
+  modelId?: string | null;
+  tokenCount?: number | null;
+  updatedAt?: string; // ISO
 }
 
 export interface Conversation {
@@ -45,6 +58,11 @@ export interface Conversation {
   messageCount: number;
   updatedAt: string; // ISO
   createdAt: string; // ISO
+  // ---- Phase 2 additions ----
+  userId?: string;
+  mode?: ConversationMode;
+  isArchived?: boolean;
+  isPrivate?: boolean;
 }
 
 // ---- Models -----------------------------------------------------------------
