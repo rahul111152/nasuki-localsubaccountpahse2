@@ -61,7 +61,7 @@ Reusable design system; loading/empty/error/offline states; responsive; accessib
 
 ## Run
 `cd /app/frontend` (Metro runs via supervisor on port 3000). Preview:
-https://nasuki-phase1.preview.emergentagent.com — or scan the Expo Go QR from the preview panel.
+https://nasuki-auth-sqlite.preview.emergentagent.com — or scan the Expo Go QR from the preview panel.
 
 ## Notes / Limitations
 - All data is mock/in-memory; nothing persists server-side. Onboarding/auth persist via local storage.
